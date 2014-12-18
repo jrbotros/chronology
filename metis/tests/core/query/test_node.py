@@ -5,8 +5,8 @@ from copy import deepcopy
 from metis.core.query.aggregate import Aggregator
 from metis.core.query.aggregate import GroupBy
 from metis.core.query.condition import Condition
-from metis.core.query.stream import Stream
-from metis.core.query.transform import Transform
+from metis.core.query.kronos.source import KronosSource 
+from metis.core.query.operator import Operator
 from metis.core.query.value import Value
 
 
@@ -20,9 +20,9 @@ class NodeTestCase(unittest.TestCase):
     self.assertEqual(Value.parse(deepcopy(_property)).to_dict(), _property)
     self.assertEqual(Value.parse(deepcopy(function)).to_dict(), function)
 
-    kronos = {'type': 'kronos', 'host': 'localhost', 'stream': 'mystream',
+    kronos = {'type': 'data_access', 'source': 'kronos', 'stream': 'mystream',
               'start_time': 100, 'end_time': 200}
-    self.assertEqual(Stream.parse(deepcopy(kronos)).to_dict(), kronos)
+    self.assertEqual(Operator.parse(deepcopy(kronos)).to_dict(), kronos)
 
     condition_lt = {'op': 'lt', 'left': deepcopy(_property),
                     'right': deepcopy(constant)}
@@ -48,16 +48,16 @@ class NodeTestCase(unittest.TestCase):
     self.assertEqual(GroupBy.parse(deepcopy(group_by)).to_dict(), group_by)
 
     project = {'type': 'project', 'fields': [deepcopy(_property)],
-               'stream': deepcopy(kronos)}
+               'source': deepcopy(kronos)}
     _filter = {'type': 'filter', 'condition': condition_lt,
-               'stream': deepcopy(project)}
+               'source': deepcopy(project)}
     aggregate = {'type': 'aggregate',
                  'group_by': deepcopy(group_by),
                  'aggregates': [deepcopy(avg), deepcopy(count)],
-                 'stream': deepcopy(_filter)}
+                 'source': deepcopy(_filter)}
     join = {'type': 'join', 'left': deepcopy(aggregate),
             'right': deepcopy(project), 'condition': deepcopy(condition_or)}
-    self.assertEqual(Transform.parse(deepcopy(project)).to_dict(), project)
-    self.assertEqual(Transform.parse(deepcopy(_filter)).to_dict(), _filter)
-    self.assertEqual(Transform.parse(deepcopy(aggregate)).to_dict(), aggregate)
-    self.assertEqual(Transform.parse(deepcopy(join)).to_dict(), join)
+    self.assertEqual(Operator.parse(deepcopy(project)).to_dict(), project)
+    self.assertEqual(Operator.parse(deepcopy(_filter)).to_dict(), _filter)
+    self.assertEqual(Operator.parse(deepcopy(aggregate)).to_dict(), aggregate)
+    self.assertEqual(Operator.parse(deepcopy(join)).to_dict(), join)

@@ -2,7 +2,7 @@ class Node(object):
   """
   Represents a node in the query plan structure. Provides a `parse` function to
   parse JSON into a heirarchy of nodes. Executors take a plan consisting of
-  nodes and use it to apply the Transformations to the stream.
+  nodes and use it to apply the Transformations to the source.
   """
   @classmethod
   def parse(cls, _dict):

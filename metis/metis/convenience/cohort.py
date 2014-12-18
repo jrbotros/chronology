@@ -12,10 +12,10 @@ from metis.core.query.aggregate import Count
 from metis.core.query.aggregate import GroupBy
 from metis.core.query.aggregate import Min
 from metis.core.query.condition import Condition
-from metis.core.query.stream import KronosStream
-from metis.core.query.transform import Aggregate
-from metis.core.query.transform import Join
-from metis.core.query.transform import Project
+from metis.core.query.kronos.source import KronosSource
+from metis.core.query.operator import Aggregate
+from metis.core.query.operator import Join
+from metis.core.query.operator import Project
 from metis.core.query.value import Add
 from metis.core.query.value import Constant
 from metis.core.query.value import Floor
@@ -48,9 +48,9 @@ def _date_to_datetime(d):
   return datetime(d.year, d.month, d.day).replace(tzinfo=tzutc())
 
 
-def _cohort_stream_transform(kronos_url, stream, start, end,
+def _cohort_stream_transform(source, stream, start, end,
                              transform, grouping_key, unit):
-  start_stream = KronosStream(kronos_url, stream, start, end)
+  start_stream = KronosSource(source, stream, start, end)
   if transform:
     transformed = transform(start_stream)
   else:
@@ -80,7 +80,7 @@ def cohort_queryplan(plan):
   """
   Input:
   {
-   'kronos_url': 'http://...',
+   'source': 'kronos', # Name of data source from settings
    'cohort':
     {'stream': CohortTest.EMAIL_STREAM, # Kronos stream to define cohort from.
      'transform': lambda x: x,          # Transformations on the kstream.
@@ -106,7 +106,7 @@ def cohort_queryplan(plan):
   """
   cohort = plan['cohort']
   action = plan['action']
-  kronos_url = plan['kronos_url']
+  source = plan['source']
 
   # Calculate the start and end dates, in Kronos time, of the
   # beginning and end of the cohort and action streams that will be
@@ -119,11 +119,11 @@ def cohort_queryplan(plan):
   cohort_end = datetime_to_kronos_time(_date_to_datetime(cohort_end)) + 1
   action_end = datetime_to_kronos_time(_date_to_datetime(action_end)) + 1
 
-  left = _cohort_stream_transform(kronos_url,
+  left = _cohort_stream_transform(source,
                                   cohort['stream'], cohort_start, cohort_end,
                                   cohort.get('transform'),
                                   cohort['grouping_key'], cohort['unit'])
-  right = _cohort_stream_transform(kronos_url,
+  right = _cohort_stream_transform(source,
                                    action['stream'], cohort_start, action_end,
                                    action.get('transform'),
                                    action['grouping_key'], action['unit'])
