@@ -12,13 +12,13 @@ from metis.core.query.aggregate import Max
 from metis.core.query.aggregate import Min
 from metis.core.query.aggregate import Sum
 from metis.core.query.condition import Condition
-from metis.core.query.stream import KronosStream
-from metis.core.query.transform import Aggregate
-from metis.core.query.transform import Filter
-from metis.core.query.transform import Join
-from metis.core.query.transform import Limit
-from metis.core.query.transform import OrderBy
-from metis.core.query.transform import Project
+from metis.core.query.kronos.source import KronosSource
+from metis.core.query.operator import Aggregate
+from metis.core.query.operator import Filter
+from metis.core.query.operator import Join
+from metis.core.query.operator import Limit
+from metis.core.query.operator import OrderBy
+from metis.core.query.operator import Project
 from metis.core.query.value import Add
 from metis.core.query.value import Constant
 from metis.core.query.value import Floor
@@ -50,7 +50,7 @@ class ExecutorTestCase(MetisServerTestCase):
 
   @executor_test
   def test_kronos(self):
-    events = self.query(KronosStream('http://localhost:9191',
+    events = self.query(KronosSource('kronos',
                                      self.stream,
                                      0,
                                      1000).to_dict())
@@ -59,7 +59,7 @@ class ExecutorTestCase(MetisServerTestCase):
       self.kronos_client.put({
         self.stream: [{constants.TIMESTAMP_FIELD: random.randint(0, 999)}]
       })
-    events = self.query(KronosStream('http://localhost:9191',
+    events = self.query(KronosSource('kronos',
                                      self.stream,
                                      0,
                                      1000).to_dict())
@@ -76,7 +76,7 @@ class ExecutorTestCase(MetisServerTestCase):
                        'i': i,
                        'i+1': i + 1}]
       })
-    events = self.query(Project(KronosStream('http://localhost:9191',
+    events = self.query(Project(KronosSource('kronos',
                                              self.stream,
                                              0,
                                              1000),
@@ -107,7 +107,7 @@ class ExecutorTestCase(MetisServerTestCase):
       else:
         event['d'] = 'helloworld'
       self.kronos_client.put({self.stream: [event]})
-    events = self.query(Filter(KronosStream('http://localhost:9191',
+    events = self.query(Filter(KronosSource('kronos',
                                             self.stream,
                                             0,
                                             1000),
@@ -142,7 +142,7 @@ class ExecutorTestCase(MetisServerTestCase):
                        'b': random.randint(1000, 10000)}]
       })
     # NOP projection to ensure events flow through Spark.
-    events = self.query(Project(KronosStream('http://localhost:9191',
+    events = self.query(Project(KronosSource('kronos',
                                              self.stream,
                                              0,
                                              1000),
@@ -154,7 +154,7 @@ class ExecutorTestCase(MetisServerTestCase):
     self.assertEqual(times, sorted(times))
 
     # ResultOrder.ASCENDING should put events in ascending order 
-    events = self.query(OrderBy(KronosStream('http://localhost:9191',
+    events = self.query(OrderBy(KronosSource('kronos',
                                              self.stream,
                                              0,
                                              1000),
@@ -171,7 +171,7 @@ class ExecutorTestCase(MetisServerTestCase):
       b = event['b']
 
     # Test that ResultOrder.ASCENDING is default
-    events2 = self.query(OrderBy(KronosStream('http://localhost:9191',
+    events2 = self.query(OrderBy(KronosSource('kronos',
                                               self.stream,
                                               0,
                                               1000),
@@ -179,7 +179,7 @@ class ExecutorTestCase(MetisServerTestCase):
     self.assertEqual(events, events2)
 
     # ResultOrder.DESCENDING should put events in descending order
-    events = self.query(OrderBy(KronosStream('http://localhost:9191',
+    events = self.query(OrderBy(KronosSource('kronos',
                                              self.stream,
                                              0,
                                              1000),
@@ -201,7 +201,7 @@ class ExecutorTestCase(MetisServerTestCase):
       self.kronos_client.put({
         self.stream: [{constants.TIMESTAMP_FIELD: i}]
       })
-    events = self.query(Limit(KronosStream('http://localhost:9191',
+    events = self.query(Limit(KronosSource('kronos',
                                            self.stream,
                                            0,
                                            20),
@@ -220,7 +220,7 @@ class ExecutorTestCase(MetisServerTestCase):
       })
       sums[50 * (i / 50)] += a
     events = self.query(
-      Aggregate(Project(KronosStream('http://localhost:9191',
+      Aggregate(Project(KronosSource('kronos',
                                      self.stream,
                                      0,
                                      1000),
@@ -246,7 +246,7 @@ class ExecutorTestCase(MetisServerTestCase):
       self.assertTrue(event['avg'] * 50 < event['sum'] + 0.1)
 
     events = self.query(
-      Aggregate(KronosStream('http://localhost:9191',
+      Aggregate(KronosSource('kronos',
                              self.stream,
                              0,
                              1000),
@@ -270,12 +270,12 @@ class ExecutorTestCase(MetisServerTestCase):
                              'a': random.randint(0, 2),
                              'b': random.randint(0, 5)}]
       })
-    events = self.query(Join(KronosStream('http://localhost:9191',
+    events = self.query(Join(KronosSource('kronos',
                                           self.stream + '1',
                                           0,
                                           200,
                                           alias='j1'),
-                             KronosStream('http://localhost:9191',
+                             KronosSource('kronos',
                                           self.stream + '2',
                                           0,
                                           200),
@@ -294,6 +294,8 @@ class ExecutorTestCase(MetisServerTestCase):
                         'right.%s' % constants.TIMESTAMP_FIELD,
                         'j1.%s' % constants.ID_FIELD,
                         'right.%s' % constants.ID_FIELD,
+                        'j1.%s' % constants.LIBRARY_FIELD,
+                        'right.%s' % constants.LIBRARY_FIELD,
                         'j1.a', 'right.a',
                         'j1.b', 'right.b'})
 
@@ -313,11 +315,11 @@ class ExecutorTestCase(MetisServerTestCase):
       })
 
     # 1-1 join with property.
-    events = self.query(Join(KronosStream('http://localhost:9191',
+    events = self.query(Join(KronosSource('kronos',
                                           self.stream + '1',
                                           0,
                                           1000),
-                             KronosStream('http://localhost:9191',
+                             KronosSource('kronos',
                                           self.stream + '2',
                                           0,
                                           1000),
@@ -330,11 +332,11 @@ class ExecutorTestCase(MetisServerTestCase):
       self.assertEqual(event['left.b'], event['right.a'])
 
     # 1-1 join with function.
-    events = self.query(Join(KronosStream('http://localhost:9191',
+    events = self.query(Join(KronosSource('kronos',
                                           self.stream + '1',
                                           0,
                                           1000),
-                             KronosStream('http://localhost:9191',
+                             KronosSource('kronos',
                                           self.stream + '2',
                                           0,
                                           1000),
@@ -349,11 +351,11 @@ class ExecutorTestCase(MetisServerTestCase):
 
     # 1-1 eqjoin with filtering.
     events = self.query(
-      Join(KronosStream('http://localhost:9191',
+      Join(KronosSource('kronos',
                         self.stream + '1',
                         0,
                         1000),
-           KronosStream('http://localhost:9191',
+           KronosSource('kronos',
                         self.stream + '2',
                         0,
                         1000),

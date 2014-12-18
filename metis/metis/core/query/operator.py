@@ -1,30 +1,22 @@
 import json
 
 from copy import deepcopy
+from importlib import import_module
 
+from metis import app
 from metis.core.execute.utils import cast_to_number
 from metis.core.execute.utils import get_value
 from metis.core.query import ExecutableNode
 from metis.core.query.aggregate import Aggregator
 from metis.core.query.aggregate import GroupBy
 from metis.core.query.condition import Condition
-from metis.core.query.stream import Stream
 from metis.core.query.value import Value
 from metis.utils.enum import Enum
 
 
-def _parse_stream_or_transform(_dict):
-  if not _dict:
-    return None
-  typ = _dict['type']
-  if typ in Stream.Type.values():
-    return Stream.parse(_dict)
-  assert typ in Transform.Type.values()
-  return Transform.parse(_dict)
-
-
-class Transform(ExecutableNode):
+class Operator(ExecutableNode):
   class Type(Enum):
+    DATA_ACCESS = 'data_access'
     PROJECT = 'project'
     FILTER = 'filter'
     ORDER_BY = 'order_by'
@@ -36,39 +28,57 @@ class Transform(ExecutableNode):
     self.alias = alias
 
   def validate(self):
-    return self.type in Transform.Type.values()
+    return self.type in Operator.Type.values()
 
   @classmethod
   def parse(self, _dict):
     typ = _dict['type']
 
-    if typ in Stream.Type.values():
-      return Stream.parse(_dict)
-
-    assert typ in Transform.Type.values()
+    if not typ in Operator.Type.values():
+      raise Exception(str(typ))
+    assert typ in Operator.Type.values()
     del _dict['type']
 
-    if 'stream' in _dict:
-      _dict['stream'] = _parse_stream_or_transform(_dict['stream'])
+    if typ == Operator.Type.DATA_ACCESS:
+      return DataAccess.parse(_dict)
 
-    if typ == Transform.Type.PROJECT:
+    if 'source' in _dict:
+      _dict['source'] = Operator.parse(_dict['source'])
+
+    if typ == Operator.Type.PROJECT:
       return Project.parse(_dict)
-    if typ == Transform.Type.FILTER:
+    if typ == Operator.Type.FILTER:
       return Filter.parse(_dict)
-    if typ == Transform.Type.ORDER_BY:
+    if typ == Operator.Type.ORDER_BY:
       return OrderBy.parse(_dict)
-    if typ == Transform.Type.LIMIT:
+    if typ == Operator.Type.LIMIT:
       return Limit.parse(_dict)
-    if typ == Transform.Type.AGGREGATE:
+    if typ == Operator.Type.AGGREGATE:
       return Aggregate.parse(_dict)
-    if typ == Transform.Type.JOIN:
+    if typ == Operator.Type.JOIN:
       return Join.parse(_dict)
 
 
-class Project(Transform):
-  def __init__(self, stream, fields, merge=False, **kwargs):
-    self.type = Transform.Type.PROJECT
-    self.stream = stream
+class DataAccess(Operator):
+  def __init__(self, alias=None):
+    self.alias = alias
+
+  @classmethod
+  def parse(cls, _dict):
+    source = _dict.get('source')
+    module = app.config['DATA_SOURCES'][source]
+
+    module, data_source = module['type'].rsplit('.', 1)
+    module = import_module(module)
+    data_source = getattr(module, data_source)
+
+    return data_source.parse(_dict)
+
+
+class Project(Operator):
+  def __init__(self, source, fields, merge=False, **kwargs):
+    self.type = Operator.Type.PROJECT
+    self.source = source
     self.fields = fields
     self.merge = merge
     super(Project, self).__init__(**kwargs)
@@ -88,10 +98,10 @@ class Project(Transform):
     return Project(**_dict)
 
 
-class Filter(Transform):
-  def __init__(self, stream, condition, **kwargs):
-    self.type = Transform.Type.FILTER
-    self.stream = stream
+class Filter(Operator):
+  def __init__(self, source, condition, **kwargs):
+    self.type = Operator.Type.FILTER
+    self.source = source
     self.condition = condition
     super(Filter, self).__init__(**kwargs)
 
@@ -101,14 +111,14 @@ class Filter(Transform):
     return Filter(**_dict)
 
 
-class OrderBy(Transform):
+class OrderBy(Operator):
   class ResultOrder(Enum):
     ASCENDING = 'ascending'
     DESCENDING = 'descending'
 
-  def __init__(self, stream, fields, order=ResultOrder.ASCENDING, **kwargs):
-    self.type = Transform.Type.ORDER_BY
-    self.stream = stream
+  def __init__(self, source, fields, order=ResultOrder.ASCENDING, **kwargs):
+    self.type = Operator.Type.ORDER_BY
+    self.source = source
     self.fields = fields
     self.order = order 
     super(OrderBy, self).__init__(**kwargs)
@@ -119,10 +129,10 @@ class OrderBy(Transform):
     return OrderBy(**_dict)
 
 
-class Limit(Transform):
-  def __init__(self, stream, limit, **kwargs):
-    self.type = Transform.Type.LIMIT
-    self.stream = stream
+class Limit(Operator):
+  def __init__(self, source, limit, **kwargs):
+    self.type = Operator.Type.LIMIT
+    self.source = source
     self.limit = limit
     super(Limit, self).__init__(**kwargs)
 
@@ -131,10 +141,10 @@ class Limit(Transform):
     return Limit(**_dict)
 
 
-class Aggregate(Transform):
-  def __init__(self, stream, group_by, aggregates, **kwargs):
-    self.type = Transform.Type.AGGREGATE
-    self.stream = stream
+class Aggregate(Operator):
+  def __init__(self, source, group_by, aggregates, **kwargs):
+    self.type = Operator.Type.AGGREGATE
+    self.source = source
     self.aggregates = aggregates
     self.group_by = group_by
     super(Aggregate, self).__init__(**kwargs)
@@ -200,9 +210,9 @@ class Aggregate(Transform):
     return Aggregate(**_dict)
 
 
-class Join(Transform):
+class Join(Operator):
   def __init__(self, left, right, condition, **kwargs):
-    self.type = Transform.Type.JOIN
+    self.type = Operator.Type.JOIN
     self.left = left
     self.right = right
     self.condition = condition
@@ -210,7 +220,7 @@ class Join(Transform):
 
   @classmethod
   def parse(self, _dict):
-    _dict['left'] = _parse_stream_or_transform(_dict['left'])
-    _dict['right'] = _parse_stream_or_transform(_dict['right'])
+    _dict['left'] = Operator.parse(_dict['left'])
+    _dict['right'] = Operator.parse(_dict['right'])
     _dict['condition'] = Condition.parse(_dict['condition'])
     return Join(**_dict)

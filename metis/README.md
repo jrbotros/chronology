@@ -2,14 +2,16 @@
 
 ## Introduction
 
-Metis is a HTTP compute service over streams of data stored in Kronos. It's
-currently implemented as a thin wrapper around the
-[Spark data processing engine](http://spark.apache.org/).
+Metis is a HTTP compute service.
 
-In the future we plan on making compute engines pluggable in Metis, and
-supporting data sources other than Kronos. So similar to how Kronos lets you
-store data in a storage backend of your choice, Metis will let you run compute
-jobs on the framework of your choice.
+Compute engines are pluggable in Metis, as are data sources. In the same way
+Kronos lets you store data in a storage backend of your choice, Metis lets you
+run compute jobs on the framework of your choice.
+
+Out of the box, Metis supports [Spark](http://spark.apache.org/) and native
+Python compute engines, and Kronos as a data source. It's also easy to write
+your own executors and data sources.
+
 
 ## Settings details
 
@@ -86,7 +88,7 @@ from metis.common.time import kronos_time_to_datetime
 from metis.core.query.aggregate import Count
 from metis.core.query.aggregate import GroupBy
 from metis.core.query.aggregate import Sum
-from metis.core.query.stream import KronosStream
+from metis.core.query.kronos.source import KronosSource
 from metis.core.query.transform import Aggregate
 from metis.core.query.transform import Limit
 from metis.core.query.transform import OrderBy
@@ -111,7 +113,7 @@ def query(plan):
 # First let's find the day that got the most donations.
 
 # All donation events which happened in the year 2012.
-stream = KronosStream('http://localhost:8150',
+source = KronosSource('kronos', # Name of data source defined in settings
                       'donations',
                       datetime_to_kronos_time(datetime(2012, 1, 1)),
                       datetime_to_kronos_time(datetime(2012, 12, 31)))
@@ -125,7 +127,7 @@ group_by = GroupBy(DateTrunc([Property(TIMESTAMP_FIELD),
                               Constant(DateTrunc.Unit.DAY)],
                              alias=TIMESTAMP_FIELD))
 
-aggregate = Aggregate(stream, group_by, aggregates)
+aggregate = Aggregate(source, group_by, aggregates)
 
 # Order by the new `total` field created in descending order and pick the
 # first event.
@@ -146,7 +148,7 @@ print 'A total of $%f were donated on %s.' % (event['total_donations'], day)
 # Now let's find the number of donations received per candidate during the day
 # from above.
 
-stream = KronosStream('http://localhost:8150',
+source = KronosSource('kronos',
                       'donations',
                       datetime_to_kronos_time(day),
                       datetime_to_kronos_time(day + timedelta(days=1)))
@@ -158,7 +160,7 @@ aggregates = [Count([], alias='num_donations')]
 # We need to group by the `cand_nm` property.
 group_by = GroupBy(Property('cand_nm', alias='candidate_name'))
 
-plan = Aggregate(stream, group_by, aggregates)
+plan = Aggregate(source, group_by, aggregates)
 
 events = list(query(plan))
 assert len(events) == 4
@@ -185,22 +187,46 @@ Take a look at [settings.py.template](metis/conf/default_settings.py).  We
 tried to document all of the settings pretty thoroughly.  If anything is
 unclear, [file an issue](../../../issues?state=open) and we'll clarify!
 
+## Data Sources
+
+### Kronos
+Metis ships with a Kronos data source, which connects to and retrieves data
+from a Kronos server.
+
+```python
+DATA_SOURCES = {
+  'kronos': {  # Call it anything you want
+    'type': 'metis.core.query.kronos.source.KronosSource',
+    'pretty_name': 'Kronos',  # Shows up in user-facing places (like Jia)
+    'url': 'http://localhost:8150',  # Point it at a Kronos server
+  },
+}
+```
+
 ## Executors
 
 ### Python
 
 This is an in-memory executor implemented in vanilla Python. It can be enabled
-by adding `python.PythonExecutor` to the `EXECUTORS` list in `settings.py`.
+by adding `metis.core.execute.python.PythonExecutor` to the `EXECUTORS` list in
+`settings.py`.
 
 ### Spark
 
 This farms out the execution of the query to a Spark cluster. It can be enabled
-by adding `spark.SparkExecutor` to the `EXECUTORS` list. When enabling this
-executor, the following setting parameters must also be configured:
+by adding `metis.core.execute.spark.SparkExecutor` to the `EXECUTORS` list.
+When enabling this executor, the following setting parameters must also be
+configured:
 
   * `SPARK_HOME` is the location where Spark is installed. This is used to
     find PySpark which is currently not available on PyPI.
   * `SPARK_MASTER` is the hostname of the master node of your Spark cluster.
   * `SPARK_PARALLELISM` (optional, default: 8) is the number of Spark workers
-    reads are parallelized to when reading events from a Kronos stream, and the
+    reads are parallelized to when reading events from a data source, and the
     parallelism factor passed down to the `Sparkcontext`.
+
+## Data Source Adapters
+Each executor defines specific access logic for each data source it can query.
+This relationship is facilitated by data source adapters, which specify a data
+source and an executor, and provide the data access logic for that particular
+combination.

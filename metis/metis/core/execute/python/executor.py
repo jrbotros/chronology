@@ -2,25 +2,17 @@ import itertools
 
 from collections import defaultdict
 
+from metis import app
 from metis.core.execute.base import Executor
 from metis.core.execute.utils import generate_filter
 from metis.core.execute.utils import get_value
 
 
 class PythonExecutor(Executor):
-  def execute_kronos_stream(self, node):
-    from pykronos import KronosClient
-
-    client = KronosClient(node.host, blocking=True)
-    return client.get(node.stream,
-                      node.start_time,
-                      node.end_time,
-                      namespace=node.namespace)
-
   def execute_aggregate(self, node):
     groups = defaultdict(list)
 
-    for event in self.execute(node.stream):
+    for event in self.execute(node.source):
       key, event = node.group_func(event)
       groups[key].append(event)
     for key in groups:
@@ -28,7 +20,7 @@ class PythonExecutor(Executor):
 
   def execute_filter(self, node):
     return itertools.ifilter(generate_filter(node.condition),
-                             self.execute(node.stream))
+                             self.execute(node.source))
 
   def execute_join(self, node):
     left_alias = node.left.alias or 'left'
@@ -54,10 +46,10 @@ class PythonExecutor(Executor):
         yield event
 
   def execute_limit(self, node):
-    return itertools.islice(self.execute(node.stream), node.limit)
+    return itertools.islice(self.execute(node.source), node.limit)
 
   def execute_order_by(self, node):
-    events = sorted(self.execute(node.stream),
+    events = sorted(self.execute(node.source),
                     key=lambda e: tuple(get_value(e, field)
                                         for field in node.fields))
     for i in (xrange(len(events) - 1, -1, -1)
@@ -66,4 +58,4 @@ class PythonExecutor(Executor):
       yield events[i]
 
   def execute_project(self, node):
-    return itertools.imap(node.map_func, self.execute(node.stream))
+    return itertools.imap(node.map_func, self.execute(node.source))

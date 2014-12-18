@@ -77,7 +77,7 @@ class SparkExecutor(Executor):
     # Delete temporary Metis lib file.
     os.unlink(metis_lib_file.name)
 
-    # We'll use this to parallelize fetching events in KronosStream.
+    # We'll use this to parallelize fetching events in KronosSource.
     # The default of 8 is from:
     # https://spark.apache.org/docs/latest/configuration.html
     self.parallelism = parallelism or 8
@@ -91,39 +91,18 @@ class SparkExecutor(Executor):
   def finalize(self, rdd):
     return rdd.collect()
 
-  def execute_kronos_stream(self, node):
-    delta = (node.end_time - node.start_time) / self.parallelism
-
-    def get_events(i):
-      from pykronos import KronosClient
-      client = KronosClient(node.host, blocking=True)
-      start_time = node.start_time + (i * delta)
-      if i == self.parallelism - 1:
-        end_time = node.end_time
-      else:
-        end_time = start_time + delta - 1
-      return list(client.get(node.stream,
-                             start_time,
-                             end_time,
-                             namespace=node.namespace))
-
-    # XXX(usmanm): Does this preserve ordering? I ran a few simulations and it
-    # seems like ordering is preserved. Need to test on a multi-node cluster as
-    # well.
-    return self.context.parallelize(range(self.parallelism)).flatMap(get_events)
-
   def execute_aggregate(self, node):
     def finalize(event):
       # `event` is of the form (key, event).
       return node.finalize_func(event[1])
 
-    return (self.execute(node.stream)
+    return (self.execute(node.source)
             .map(node.group_func)
             .reduceByKey(node.reduce_func)
             .map(finalize))
 
   def execute_filter(self, node):
-    return self.execute(node.stream).filter(generate_filter(node.condition))
+    return self.execute(node.source).filter(generate_filter(node.condition))
 
   def execute_join(self, node):
     left_alias = node.left.alias or 'left'
@@ -159,7 +138,7 @@ class SparkExecutor(Executor):
         return None
 
       # Only return getters if both sides of the conditional read from different
-      # streams. You can't use this optimization say if the condition is
+      # sources. You can't use this optimization say if the condition is
       # (left.x + right.y = 10)
       # XXX: This isn't kosher for non-deterministic functions.
       if (all(p.startswith('%s.' % left_alias) for p in left_properties) and
@@ -234,10 +213,10 @@ class SparkExecutor(Executor):
   def execute_limit(self, node):
     # TODO(usmanm): Is there a better way than to collect and redistribute all
     # events?
-    return self.context.parallelize(self.execute(node.stream).take(node.limit))
+    return self.context.parallelize(self.execute(node.source).take(node.limit))
 
   def execute_order_by(self, node):
-    return (self.execute(node.stream)
+    return (self.execute(node.source)
             .keyBy(lambda e: tuple(get_value(e, field)
                                    for field in node.fields))
             .sortByKey(ascending=node.order == node.ResultOrder.ASCENDING)
@@ -252,4 +231,4 @@ class SparkExecutor(Executor):
       for field in node.fields:
         new_event[field.alias] = get_value(event, field)
       return new_event
-    return self.execute(node.stream).map(node.map_func)
+    return self.execute(node.source).map(node.map_func)

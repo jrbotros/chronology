@@ -1,14 +1,15 @@
-from metis.core.query.stream import KronosStream
-from metis.core.query.transform import Aggregate
-from metis.core.query.transform import Filter
-from metis.core.query.transform import Join
-from metis.core.query.transform import Limit
-from metis.core.query.transform import OrderBy
-from metis.core.query.transform import Project
+from metis.core.execute.registry import DataSourceAdapterRegistry
+from metis.core.query.operator import DataAccess
+from metis.core.query.operator import Aggregate
+from metis.core.query.operator import Filter
+from metis.core.query.operator import Join
+from metis.core.query.operator import Limit
+from metis.core.query.operator import OrderBy
+from metis.core.query.operator import Project
 
-# XXX: Whenever adding a new `Stream`, `Transform` or a subclass of
-# `ExecutableNode`, please add a method for to the `Executor` class below and
-# create a dispatch case inside `Executor.execute`.
+# XXX: Whenever adding a new `Operator` or a subclass of `ExecutableNode`, 
+# please add a method for to the `Executor` class below and create a dispatch
+# case inside `Executor.execute`.
 
 
 class Executor(object):
@@ -18,9 +19,8 @@ class Executor(object):
   up the dynamic dispatcher.
   """
   def execute(self, node):
-    if isinstance(node, KronosStream):
-      return self.execute_kronos_stream(node)
-
+    if isinstance(node, DataAccess):
+      return self.execute_data_access(node)
     if isinstance(node, Aggregate):
       return self.execute_aggregate(node)
     if isinstance(node, Filter):
@@ -39,8 +39,10 @@ class Executor(object):
   def finalize(self, result):
     return result
 
-  def execute_kronos_stream(self, node):
-    raise NotImplemented
+  def execute_data_access(self, node):
+    registry = DataSourceAdapterRegistry()
+    adapter = registry.get(type(self), type(node))()
+    return adapter.execute(node, self)
 
   def execute_aggregate(self, node):
     raise NotImplemented
