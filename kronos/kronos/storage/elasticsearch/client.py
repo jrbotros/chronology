@@ -172,9 +172,10 @@ class IndexManager(object):
 
     aliases = set()
 
-    for value in self.es.indices.get_aliases(
-      index=self.get_alias(namespace, '*')).itervalues():
-      aliases.update(value['aliases'])
+    for k, value in self.es.indices.get_aliases(
+      index=self.get_alias(namespace, '*')).iteritems():
+      if 'aliases' in value:
+        aliases.update(value['aliases'])
 
     return filter(lambda a: a >= start_alias and a <= end_alias, aliases)
 
