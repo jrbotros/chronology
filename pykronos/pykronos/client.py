@@ -50,7 +50,20 @@ class KronosClient(object):
   """
   Initialize a Kronos client that can connect to a server at `http_url`
 
-  Put requests are non-blocking if `blocking`=False.
+  The `blocking` parameter allows put requests to block until the
+  server responds, and returns some information on the response.
+  Here's an example:
+
+  {u'stream_name_1': 3, u'stream_name_2': 1, u'@took': u'1ms'}
+    -> put 3 events on stream_name_1
+    -> put 1 event on stream_name_2
+    -> put took 1ms to complete
+
+  If `blocking` is false and the process running the client ends
+  before flushing the pending data to the server, you might lose
+  that data. Calling `flush` will block until all pending data has
+  been acknowledged by the server.
+
   If non-blocking, `sleep_block` specifies the frequency of
     a background thread that flushes events to the server.
 
@@ -150,20 +163,6 @@ class KronosClient(object):
     """
     Sends a dictionary of `event_dict` of the form {stream_name:
     [event, ...], ...}  to the server.
-
-    The `blocking` parameter allows the request to block until the
-    server responds, and returns some information on the response.
-    Here's an example:
-
-    {u'stream_name_1': 3, u'stream_name_2': 1, u'@took': u'1ms'}
-      -> put 3 events on stream_name_1
-      -> put 1 event on stream_name_2
-      -> put took 1ms to complete
-
-    If `blocking` is false and the process running the client ends
-    before flushing the pending data to the server, you might lose
-    that data.  Calling `flush` will block until all pending data has
-    been acknowledged by the server.
     """
     # Copy the input, in case we need to modify it by adding a timestamp.
     event_dict = copy.deepcopy(event_dict)
