@@ -18,6 +18,17 @@ def index():
   })
 
 
+@app.route('/1.0/sources', methods=['GET'])
+def data_sources():
+  response = {'status': 'OK',
+              'sources': {}}
+  for source, source_info in app.config['DATA_SOURCES'].iteritems():
+    response['sources'][source] = {
+      'type': source_info['type'],
+      'pretty_name': source_info['pretty_name']}
+  return jsonify(response)
+
+
 # TODO(usmanm): Add error handling everywhere.
 @app.route('/1.0/query', methods=['POST'])
 def query():

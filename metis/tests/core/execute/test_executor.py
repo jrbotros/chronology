@@ -153,7 +153,7 @@ class ExecutorTestCase(MetisServerTestCase):
     times = [event[constants.TIMESTAMP_FIELD] for event in events]
     self.assertEqual(times, sorted(times))
 
-    # ResultOrder.ASCENDING should put events in ascending order 
+    # ResultOrder.ASCENDING should put events in ascending order
     events = self.query(OrderBy(KronosSource('kronos',
                                              self.stream,
                                              0,
