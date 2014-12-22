@@ -16,12 +16,18 @@ class MetisServerTestCase(unittest.TestCase):
   def setUp(self):
     self.kronos_client = KronosClient('http://localhost:9191')
     self.index_path = '1.0/index'
+    self.source_path = '1.0/sources'
     self.query_path = '1.0/query'
     self.server_url = 'http://localhost:9192/%s'
     self.executor = None
 
   def index(self):
     response = requests.get(self.server_url % self.index_path)
+    self.assertEqual(response.status_code, requests.codes.ok)
+    return response.json()
+
+  def data_sources(self):
+    response = requests.get(self.server_url % self.source_path)
     self.assertEqual(response.status_code, requests.codes.ok)
     return response.json()
 
