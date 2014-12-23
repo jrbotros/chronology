@@ -18,6 +18,7 @@ DATA_SOURCES = {
     'type': 'metis.core.query.kronos.source.KronosSource',
     'pretty_name': 'Kronos',  # Displayed to the user
     'url': 'http://localhost:9191',  # Kronos server URL
+    'namespace': 'kronos',
   },
 }
 

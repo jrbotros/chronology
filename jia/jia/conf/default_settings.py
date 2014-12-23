@@ -13,6 +13,11 @@ FORCE_SSL = False
 ALLOW_PYCODE = False
 SYSTEM_EMAIL = 'noreply@yourcompany.com'  # Emails sent from here
 
+# DEPRECATION WARNING: Communication with backend data sources is moving into
+# Metis, and will be removed in the next release of Jia
+KRONOS_URL = 'http://localhost:8150'
+KRONOS_NAMESPACE = 'kronos'
+
 # Precompute settings
 PRECOMPUTE = True
 # The cache is written here; can be the same as KRONOS_URL
@@ -28,10 +33,10 @@ SCHEDULER_FAILURE_EMAILS = [
   'other@yourcompany.com',
 ]
 
-# Kronos and metis pointers
-KRONOS_URL = 'http://localhost:8150'
-KRONOS_NAMESPACE = 'kronos'
+# Metis settings
 METIS_URL = 'http://localhost:8151'
+DATA_SOURCE_NAME = 'kronos'
+DATA_SOURCE_TYPE = 'kronos'
 
 # This database persists all dashboards and settings
 SQLALCHEMY_DATABASE_URI = 'sqlite:///%s/app.db' % APPROOT

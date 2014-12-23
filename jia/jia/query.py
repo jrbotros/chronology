@@ -5,9 +5,12 @@ import metis.core.query.value
 from flask import current_app
 from metis.core.query.aggregate import GroupBy
 from metis.core.query.condition import Condition
-from metis.core.query.stream import KronosStream
-from metis.core.query.transform import Project, Filter, Aggregate, OrderBy
-from metis.core.query.transform import Limit
+from metis.core.query.operator import Aggregate
+from metis.core.query.operator import DataAccess
+from metis.core.query.operator import Filter
+from metis.core.query.operator import Limit
+from metis.core.query.operator import OrderBy
+from metis.core.query.operator import Project
 from metis.core.query.value import Constant
 from metis.core.query.value import Property
 
@@ -92,8 +95,15 @@ def limit(query_plan, operands):
 
 def create_metis_query_plan(query, start_time, end_time):
   query = copy.deepcopy(query)
-  host = current_app.config['KRONOS_URL']
-  query_plan = KronosStream(host, query['stream'], start_time, end_time)
+
+  query_plan = {
+    'type': 'data_access',
+    'source': current_app.config['DATA_SOURCE_NAME'],
+    'stream': query['stream'],
+    'start_time': start_time,
+    'end_time': end_time,
+  }
+
   operators = {
     'transform': transform,
     'filter': filter,

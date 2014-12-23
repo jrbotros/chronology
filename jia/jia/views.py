@@ -1,6 +1,7 @@
 import binascii
 import json
 import os
+import requests
 
 from flask import Blueprint
 from flask import current_app
@@ -60,12 +61,12 @@ def redirect_old_board_url(board_id=None):
 @json_endpoint
 @require_auth
 def streams():
-  kc = KronosClient(current_app.config['KRONOS_URL'],
-                    namespace=current_app.config['KRONOS_NAMESPACE'])
-  kstreams = kc.get_streams(namespace=current_app.config['KRONOS_NAMESPACE'])
-  kstreams = sorted(kstreams)
+  streams_url = '%s/1.0/streams/%s' % (current_app.config['METIS_URL'],
+                                       current_app.config['DATA_SOURCE_NAME'])
+  request = requests.get(streams_url)
+  stream_list = json.loads(request.text)
   return {
-    'streams': kstreams,
+    'streams': stream_list['streams'],
   }
 
 
@@ -73,13 +74,15 @@ def streams():
 @json_endpoint
 @require_auth
 def infer_schema(stream_name=None):
-  kc = KronosClient(current_app.config['KRONOS_URL'],
-                    namespace=current_app.config['KRONOS_NAMESPACE'])
-  schema = kc.infer_schema(stream_name,
-                           namespace=current_app.config['KRONOS_NAMESPACE'])
-  return schema
-   
-   
+  cfg = current_app.config
+  schema_url = '%s/1.0/streams/%s/%s' % (cfg['METIS_URL'],
+                                         cfg['DATA_SOURCE_NAME'],
+                                         stream_name)
+  request = requests.get(schema_url)
+  schema = json.loads(request.text)
+  return schema['schema']
+
+
 @app.route('/boards', methods=['GET'])
 @json_endpoint
 @require_auth

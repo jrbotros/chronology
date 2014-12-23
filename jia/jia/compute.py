@@ -189,11 +189,12 @@ class QueryCompute(object):
     :param unique_id: An unused flag that allows the scheduler to hash this
     function uniquely based on its args when it passes through
     """
+    # XXX(derek): DEPRECATION WARNING
+    # Use of the implicit Kronos client in pycode queries is deprecated
     client = KronosClient(self._app.config['KRONOS_URL'],
                           namespace=self._app.config['KRONOS_NAMESPACE'],
                           blocking=False,
                           sleep_block=0.2)
-
     locals_dict = {
       'kronos_client': client,
       'events': [],
