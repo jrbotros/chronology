@@ -3,7 +3,7 @@ from metis.core.execute.python import PythonExecutor
 from metis.core.execute.spark import SparkExecutor
 from metis.core.query.adapter import DataSourceAdapter
 from metis.core.query.kronos import KronosSource
-from pykronos import KronosClient
+from pykronos.client import KronosClient
 
 class Python(DataSourceAdapter):
   @classmethod

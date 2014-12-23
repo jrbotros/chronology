@@ -17,6 +17,8 @@ class MetisServerTestCase(unittest.TestCase):
     self.kronos_client = KronosClient('http://localhost:9191')
     self.index_path = '1.0/index'
     self.source_path = '1.0/sources'
+    self.streams_path = '1.0/streams/kronos'
+    self.schema_path = '1.0/streams/kronos/%s'
     self.query_path = '1.0/query'
     self.server_url = 'http://localhost:9192/%s'
     self.executor = None
@@ -28,6 +30,17 @@ class MetisServerTestCase(unittest.TestCase):
 
   def data_sources(self):
     response = requests.get(self.server_url % self.source_path)
+    self.assertEqual(response.status_code, requests.codes.ok)
+    return response.json()
+
+  def get_streams(self):
+    response = requests.get(self.server_url % self.streams_path)
+    self.assertEqual(response.status_code, requests.codes.ok)
+    return response.json()
+
+  def schema(self):
+    url = self.server_url % self.schema_path % 'test_schema.test1'
+    response = requests.get(url)
     self.assertEqual(response.status_code, requests.codes.ok)
     return response.json()
 
