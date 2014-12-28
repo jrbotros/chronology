@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # coding: utf-8
 """
 A script to bulk-load a bunch of data into a Kronos server for testing
