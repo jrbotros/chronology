@@ -43,7 +43,8 @@ def index():
   for key in wanted_data:
     user_dict[key] = getattr(user, key)
   user_dict = json.dumps(user_dict)
-  return render_template(template, pycode=allow_pycode, user=user_dict)
+  return render_template(template, pycode=allow_pycode, user=user_dict,
+                         config=current_app.config)
 
 
 @app.route('/<board_id>', methods=['GET'])

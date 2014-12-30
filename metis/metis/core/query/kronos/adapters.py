@@ -35,10 +35,12 @@ class Spark(DataSourceAdapter):
       return list(client.get(node.stream,
                              start_time,
                              end_time,
-                             namespace=node.namespace))
+                             namespace=node._namespace))
 
     # XXX(usmanm): Does this preserve ordering? I ran a few simulations and it
     # seems like ordering is preserved. Need to test on a multi-node cluster as
     # well.
     parallelize = executor.context.parallelize(range(executor.parallelism))
-    return parallelize.flatMap(get_events)
+    r = parallelize.flatMap(get_events)
+    print 'foo::::::::::::::::::::::::::::::::::::', r
+    return r

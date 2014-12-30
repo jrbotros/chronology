@@ -165,7 +165,7 @@ function ($scope, $http, $location, $timeout, $injector, $routeParams,
   $scope.updateSchema = function (panel) {
     $http.get('/streams/' + panel.data_source.query.stream)
       .success(function (data, status, headers, config) {
-        panel.cache.streamProperties = data.schema.required;
+        panel.cache.streamProperties = data.required;
       }
     );
   }
