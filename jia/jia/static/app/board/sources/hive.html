@@ -1,0 +1,21 @@
+        <div class="row">
+          <div class="stream col-xs-12"
+               ng-class="{'vqb-invalid': !panel.data_source.query.stream &&
+                                         panel.cache.hasBeenRun}">
+            <ui-select ng-model="panel.data_source.query.stream" theme="bootstrap">
+              <ui-select-match placeholder="Stream">
+                {{ $select.selected }}
+                <span class="input-fade"></span> 
+              </ui-select-match>
+              <ui-select-choices repeat="stream in streams | filter: $select.search">
+                <div ng-bind-html="stream | highlight: $select.search"></div>
+              </ui-select-choices>
+            </ui-select>
+          </div>
+        </div>
+        <div class="timeframe row">
+          <div class="col-xs-12">
+            <input type="text" class="form-control"
+                   ng-model="panel.data_source.query.where">
+          </div>
+        </div>

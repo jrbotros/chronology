@@ -71,6 +71,7 @@ function ($scope, $http, $location, $timeout, $injector, $routeParams,
   // out of @usmanm's code in the Angular rewrite.
   $scope.boardId = $routeParams.boardId;
   $scope.showCodeToggle = JIA_ALLOW_PYCODE;
+  $scope.dataSource = '/static/app/board/sources/' + JIA_DATA_SOURCE + '.html';
 
   $scope.editorOptions = {
     lineWrapping: true,
@@ -580,6 +581,7 @@ function ($scope, $http, $location, $timeout, $injector, $routeParams,
         code: '',
         query: {
           stream: undefined,
+          where: '',
           steps: []
         },
         timeframe: {

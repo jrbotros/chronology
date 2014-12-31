@@ -218,6 +218,7 @@ class QueryCompute(object):
     end_time = datetime_to_kronos_time(end_time)
     q = create_metis_query_plan(self._query, start_time, end_time)
     r = requests.post("%s/1.0/query" % self._app.config['METIS_URL'], data=q)
+    print r.text
     return json.loads('[%s]' % (',').join(r.text.splitlines()))
 
   def compute(self, use_cache=True):

@@ -99,9 +99,8 @@ def create_metis_query_plan(query, start_time, end_time):
   query_plan = {
     'type': 'data_access',
     'source': current_app.config['DATA_SOURCE_NAME'],
-    'stream': query['stream'],
-    'start_time': start_time,
-    'end_time': end_time,
+    'table': query['stream'],
+    'where_clause': query['where'],
   }
 
   operators = {
@@ -118,4 +117,7 @@ def create_metis_query_plan(query, start_time, end_time):
     operands = operation['operands']
     query_plan = operators[operator](query_plan, operands)
 
-  return json.dumps({'plan': query_plan.to_dict()})
+  if type(query_plan) != dict:
+    query_plan = query_plan.to_dict()
+
+  return json.dumps({'plan': query_plan})
