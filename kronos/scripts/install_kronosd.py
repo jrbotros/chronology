@@ -56,10 +56,11 @@ def make_dirs():
 
 def copy_files():
   print 'Copying configuration and init.d script files...'
+  safe_mkdir('/etc/uwsgi')
   shutil.copy(os.path.join(BASE_DIR, 'scripts/uwsgi.ini'),
-              '/etc/kronos/uwsgi.ini')
-  shutil.copy(os.path.join(BASE_DIR, 'scripts/kronosd.init.d'),
-              '/etc/init.d/kronos')
+              '/etc/uwsgi/kronos.ini')
+  kronosd_file_path = os.path.join(BASE_DIR, 'scripts/kronosd.init.d')
+  shutil.copy(kronosd_file_path, '/etc/init.d/kronosd')
   with open(os.path.join(BASE_DIR, 'settings.py.template')) as f:
     settings = f.read()
   if not LOG_DIR_RE.search(settings):

@@ -1,7 +1,7 @@
 #! /bin/sh
 
 ### BEGIN INIT INFO
-# Provides:	kronosd
+# Provides: kronosd
 # Description: Kronos time series storage engine
 ### END INIT INFO
 
@@ -28,7 +28,7 @@ case "$1" in
   fi
 
 	echo -n "Starting kronosd: "
-	if (cd $LIBDIR/uwsgi && ./uwsgi --ini /etc/kronos/uwsgi.ini --pidfile $PIDFILE --daemonize $LOGFILE)
+	if (cd $LIBDIR/uwsgi && ./uwsgi --ini /etc/uwsgi/kronos.ini --pidfile $PIDFILE --daemonize $LOGFILE)
 	then
 		echo "ok"
 	else
