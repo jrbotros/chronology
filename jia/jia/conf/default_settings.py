@@ -41,6 +41,7 @@ DATA_SOURCE_TYPE = 'kronos'
 # This database persists all dashboards and settings
 SQLALCHEMY_DATABASE_URI = 'sqlite:///%s/app.db' % APPROOT
 
+ENABLE_GOOGLE_AUTH = False
 # Google authentication to protect your board from random users
 ALLOWED_EMAILS = map(re.compile, [
   # Only user IDs matching regexes in this list will be allowed to create
