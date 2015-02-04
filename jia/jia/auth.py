@@ -84,7 +84,9 @@ def google_callback():
           user.email = user_info['email']
           user.picture = user_info['picture']
           user.locale = user_info['locale']
-          user.hd = user_info['hd']
+          # Optional, as per
+          # https://developers.google.com/accounts/docs/OpenIDConnect
+          user.hd = user_info.get('hd', 'notprovided.badtld')
           db.session.add(user)
           db.session.commit()
           session['user'] = user.id

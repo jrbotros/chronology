@@ -4,12 +4,12 @@
 
 We've already pushed a working [Dockerfile to Docker Hub](https://registry.hub.docker.com/u/chronology/jia/), so you can do something like the following:
 
-  * On a host machine, put a `settings.py` in `/etc/jia/settings.py`
-  * Run `sudo docker run -v /etc/jia:/etc/jia -p PUBLIC_PORT:JIA_PORT_IN_SETTINGS_PY chronology/jia:0.6.0`
+  * On a host machine, put a `settings.py` in `/etc/jia/settings.py`.  Note that the Jia port in `settings.py` is ignored, as we communicate with Jia via nginx.
+  * Run `docker run -v /etc/jia:/etc/jia -v /var/log/jia/:/var/log/jia/ -p PUBLIC_PORT:80 chronology/jia:v0.7.1`
+  * Check `/var/log/jia` for things like Jia, nginx, and scheduler logs.
 
 ## How to create new Dockerfiles for future versions of Jia
 
   * Create a tag (e.g., v0.7.0) of the repository pointing to the right git commit of chronology/jia.
-  * `JIA_VERSION=v0.7.0 make generate_dockerfile`
-  * `JIA_VERSION=v0.7.0 make build`. Note: Docker aggressively caches commands for performance.  To avoid this, for example if you had to change which hash a tag points to, call `JIA_VERSION=v0.7.0 make build_nocache`.
-  * `JIA_VERSION=v0.7.0 make push`
+  * `./build.sh [git hash or tag you want to build] chronology/jia:v[version]
+  * `python ../../docker_tools/manage_docker.py push --tag chronology/jia:v[version]`
