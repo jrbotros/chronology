@@ -11,5 +11,5 @@ We've already pushed a working [Dockerfile to Docker Hub](https://registry.hub.d
 ## How to create new Dockerfiles for future versions of Jia
 
   * Create a tag (e.g., v0.7.0) of the repository pointing to the right git commit of chronology/jia.
-  * `./build.sh [git hash or tag you want to build] chronology/jia:v[version]
+  * `./build.sh [git hash or tag you want to build] chronology/jia:v[version]`
   * `python ../../docker_tools/manage_docker.py push --tag chronology/jia:v[version]`
