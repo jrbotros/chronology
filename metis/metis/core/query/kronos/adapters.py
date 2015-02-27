@@ -15,7 +15,7 @@ class Python(DataSourceAdapter):
     return client.get(node.stream,
                       node.start_time,
                       node.end_time,
-                      namespace=node.namespace)
+                      namespace=node._namespace)
 
 class Spark(DataSourceAdapter):
   @classmethod
