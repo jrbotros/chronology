@@ -8,9 +8,9 @@ We've already pushed a working [Dockerfile to Docker Hub](https://registry.hub.d
   * Create `/var/log/kronos` for log output
   * Run `sudo docker run -d -p 8150:8150 -v /etc/kronos:/etc/kronos -v /var/log/kronos:/var/log/kronos chronology/kronos:$(KRONOS_VERSION)`
 
-## How to create new Dockerfiles for future versions of Kronos
+## How to build/push future versions
 
-  * Tag the git commit for which you want to generate a Docker.
-  * In `kronos/docker` directory, run `KRONOS_VERSION=v0.7.0 make generate_dockerfile`
-  * In the same directory, run `KRONOS_VERSION=v0.7.0 make build`. Note: Docker aggressively caches commands for performance.  To avoid this, for example if you had to change which hash a tag points to, call `KRONOS_VERSION=v0.7.0 make build_nocache`.
-  * In the same directory, run `KRONOS_VERSION=v0.7.0 make push`
+  * `./build.sh [git hash or tag you want to build] chronology/kronos:v[version]`
+  * `python ../../docker_tools/manage_docker.py push --tag chronology/kronos:v[version]`
+
+Note: Docker aggressively caches commands for performance.  To avoid this, in build.sh, add --no-cache option to `manage_docker.py build.`

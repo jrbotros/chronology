@@ -14,7 +14,7 @@ RUN npm install -g grunt-cli
 COPY chronology/jia/requirements.txt /requirements.txt
 RUN pip install -r /requirements.txt
 COPY chronology /chronology
-WORKDIR chronology/jia
+WORKDIR /chronology/jia
 RUN npm install
 RUN grunt build
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf

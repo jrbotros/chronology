@@ -6,24 +6,35 @@ A script to manage and package Docker files.
 
 import argparse
 import logging
-import os
+import subprocess
 
 log = logging.getLogger(__name__)
 
+
 def main(args):
   if args.subcommand == 'export':
-    os.system('mkdir -p {export_path}'.format(export_path=args.export_path))
-    os.system('(cd {repository_path} && git archive {hash} | '
-              'tar -x -C {export_path})'.format(
-                repository_path=args.repository_path, hash=args.hash,
-                export_path=args.export_path))
+    subprocess.check_call('git rev-parse --verify {hash}^{{commit}}'
+                          .format(hash=args.hash), shell=True)
+    subprocess.check_call('mkdir -p {export_path}'
+                          .format(export_path=args.export_path),
+                          shell=True)
+    subprocess.check_call('(cd {repository_path} && git archive {hash} | '
+                          'tar -x -C {export_path})'.format(
+                            repository_path=args.repository_path,
+                            hash=args.hash,
+                            export_path=args.export_path),
+                          shell=True)
   elif args.subcommand == 'build':
-    os.system('(docker build {no_cache} -t {tag} '
-              '{dockerfile_directory})'.format(
-                no_cache=('--no-cache=true' if args.no_cache else ''),
-                tag=args.tag, dockerfile_directory=args.dockerfile_directory))
+    subprocess.check_call('(docker build {no_cache} -t {tag} '
+                          '{dockerfile_directory})'.format(
+                            no_cache=('--no-cache=true' if args.no_cache
+                                      else ''),
+                            tag=args.tag,
+                            dockerfile_directory=args.dockerfile_directory),
+                          shell=True)
   elif args.subcommand == 'push':
-    os.system('(docker push {tag})'.format(tag=args.tag))
+    subprocess.check_call('(docker push {tag})'.format(tag=args.tag),
+                          shell=True)
 
 
 def process_args():
