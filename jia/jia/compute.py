@@ -91,8 +91,8 @@ class QueryCompute(object):
       self._app = current_app
       self._app.config  # The above line won't fail, but this one will
     except RuntimeError:
-      from scheduler import get_app 
-      self._app = get_app() 
+      from scheduler import get_app
+      self._app = get_app()
     self._query = query
     self._bucket_width = bucket_width
     self._untrusted_time = untrusted_time
@@ -201,15 +201,14 @@ class QueryCompute(object):
       'start_time': start_time,
       'end_time': end_time,
     }
-
     try:
       exec self._query in {}, locals_dict  # No globals.
     except:
       _, exception, tb = sys.exc_info()
       raise PyCodeError(exception, traceback.format_tb(tb))
 
-    events = sorted(locals_dict.get('events', []),
-                    key=lambda event: event['@time'])
+    # Retrieve the `events` variable as computed by the pycode.
+    events = locals_dict.get('events', [])
 
     return events
 
