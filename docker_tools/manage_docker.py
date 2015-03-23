@@ -20,21 +20,29 @@ def main(args):
                           shell=True)
     subprocess.check_call('(cd {repository_path} && git archive {hash} | '
                           'tar -x -C {export_path})'.format(
-                            repository_path=args.repository_path,
-                            hash=args.hash,
-                            export_path=args.export_path),
+                              repository_path=args.repository_path,
+                              hash=args.hash,
+                              export_path=args.export_path),
                           shell=True)
   elif args.subcommand == 'build':
     subprocess.check_call('(docker build {no_cache} -t {tag} '
                           '{dockerfile_directory})'.format(
-                            no_cache=('--no-cache=true' if args.no_cache
-                                      else ''),
-                            tag=args.tag,
-                            dockerfile_directory=args.dockerfile_directory),
+                              no_cache=('--no-cache=true' if args.no_cache
+                                        else ''),
+                              tag=args.tag,
+                              dockerfile_directory=args.dockerfile_directory),
                           shell=True)
   elif args.subcommand == 'push':
     subprocess.check_call('(docker push {tag})'.format(tag=args.tag),
                           shell=True)
+    if not args.no_latest:
+      latest_tag = _get_latest_tag(args.tag)
+
+      subprocess.check_call('(docker tag {versioned_tag} {latest_tag})'.format(
+          versioned_tag=args.tag, latest_tag=latest_tag), shell=True)
+
+      subprocess.check_call('(docker push {lastest_tag})'.format(
+          lastest_tag=latest_tag), shell=True)
 
 
 def process_args():
@@ -70,9 +78,23 @@ def process_args():
                            help=('The tag for the built image (e.g., '
                                  'chronology/jia:v0.7.2)'))
 
+  push_parser.add_argument('--no-latest', action='store_true',
+                           help=('Allow push image as latest?'))
+
   args = parser.parse_args()
   return args
 
+
+def _get_latest_tag(tag):
+  """
+      Strip the version number from a tag
+      to push as the 'latest' version.
+  """
+  try:
+    tag, version = tag.split(":")
+  except ValueError:
+    pass
+  return tag + ":latest"
 
 if __name__ == '__main__':
   main(process_args())
