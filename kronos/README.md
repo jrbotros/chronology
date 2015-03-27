@@ -61,7 +61,7 @@ Configure your settings in `/etc/kronos/settings.py` and
 `/etc/kronos/uwsgi.ini`. Logs can be found in `/var/log/kronos`.
 When everything is configured to your liking, run
 ```
-sudo /etc/init.d/kronos start
+sudo /etc/init.d/kronosd start
 ```
 You can also call `stop`, `restart`, or `force-reload` on that command.
 
