@@ -15,14 +15,14 @@ REQUIREMENTS = [
                                              'requirements.txt')).readlines()
   if not line.startswith('git+')
 ]
-DEPDENDENCY_LINKS = [
+DEPENDENCY_LINKS = [
   line.strip() for line in open(os.path.join(os.path.dirname(__file__),
                                              'requirements.txt')).readlines()
   if line.startswith('git+')
 ]
 
 # Add dependency_links to requires:
-for link in DEPDENDENCY_LINKS:
+for link in DEPENDENCY_LINKS:
   module, version = link.split('=')[1].rsplit('-', 1)
   REQUIREMENTS.append('%s==%s' % (module, version))
 
@@ -48,7 +48,7 @@ setup(name='kronos',
       url='https://github.com/Locu/chronology/kronos',
       keywords=['kronos', 'analytics', 'metrics', 'client', 'logging'],
       install_requires=REQUIREMENTS,
-      dependency_links=DEPDENDENCY_LINKS,
+      dependency_links=DEPENDENCY_LINKS,
       author='GoDaddy',
       author_email='devs@locu.com',
       cmdclass={
