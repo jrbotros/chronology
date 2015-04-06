@@ -1,5 +1,7 @@
 # https://docs.docker.com/articles/dockerfile_best-practices/
-FROM ubuntu:14.04
+# Check for updates:
+#   https://github.com/phusion/baseimage-docker/blob/master/Changelog.md
+FROM phusion/baseimage:0.9.16
 
 # Install dependencies.
 RUN \
@@ -11,7 +13,6 @@ RUN \
   python-all-dev \
   python-pip \
   python2.7 \
-  supervisor \
   uuid-dev \
   wget
 
@@ -24,5 +25,6 @@ WORKDIR /chronology/kronos
 RUN python setup.py install
 RUN mkdir -p /home/kronos && chown -R kronos:kronos /home/kronos
 
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-CMD ["/usr/bin/supervisord"]
+RUN mkdir /etc/service/kronos
+COPY kronos.sh /etc/service/kronos/run
+CMD ["/sbin/my_init"]
