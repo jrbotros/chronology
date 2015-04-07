@@ -15,7 +15,6 @@ RUN \
   python-all-dev \
   python-pip \
   python2.7 \
-  supervisor \
   uuid-dev \
   wget
 
@@ -35,7 +34,6 @@ RUN apt-get update && \
   dsc20=2.0.11-1 \
   cassandra=2.0.11 \
   elasticsearch
-RUN service cassandra stop
 
 COPY chronology/kronos/requirements.txt /requirements.txt
 RUN sudo pip install -r /requirements.txt
@@ -43,10 +41,10 @@ RUN sudo pip install -r /requirements.txt
 COPY chronology /chronology
 WORKDIR /chronology/kronos
 
-RUN python setup.py install
-RUN mkdir -p /home/kronos && chown -R kronos:kronos /home/kronos
+RUN mkdir /etc/service/cassandra
+COPY run-cassandra.sh /etc/service/cassandra/run
+RUN mkdir /etc/service/elasticsearch
+COPY run-elasticsearch.sh /etc/service/elasticsearch/run
+COPY setup-elasticsearch.sh /etc/my_init.d/elasticsearch.sh
 
-COPY run-cassandra.sh /etc/my_init.d/cassandra.sh
-COPY run-elasticsearch.sh /etc/my_init.d/elasticsearch.sh
-
-CMD ["/sbin/my_init", "--quiet", "--", "sh", "-c", "sleep 15; ./runtests.py all"]
+CMD ["/sbin/my_init", "--quiet", "--", "sh", "-c", "sleep 10; ./runtests.py all"]
