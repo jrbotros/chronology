@@ -23,6 +23,7 @@ locally:
 git clone https://github.com/Locu/chronology.git
 cd chronology/kronos
 sudo make installdeps
+sudo pip install -r requirements.txt  # no sudo if you are in a virtualenv!!
 python runserver.py --port 8151 --config settings.py.template --debug
 ```
 

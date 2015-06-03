@@ -28,6 +28,7 @@ locally:
 git clone https://github.com/Locu/chronology.git
 cd chronology/metis
 make installdeps
+sudo pip install -r requirements.txt  # no pip if using a virtualenv!
 python runserver.py --port 8152 --config settings.py.template --debug
 ```
 
