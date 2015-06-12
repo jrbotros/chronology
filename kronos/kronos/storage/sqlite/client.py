@@ -5,6 +5,7 @@ from collections import defaultdict
 
 from timeuuid import TimeUUID
 
+from kronos.conf.constants import ID_FIELD
 from kronos.conf.constants import MAX_LIMIT
 from kronos.conf.constants import ResultOrder
 from kronos.core import marshal
@@ -29,8 +30,24 @@ _CREATE_TABLE = [
 ]
 
 
-def tuuid_id_str(uuid):
-  return str(uuid)
+def flip_uuid_parts(uuid):
+  """
+  Flips high and low segments of the timestamp portion of a UUID string.
+  This enables correct lexicographic sorting. Because it is a simple flip,
+  this function works in both directions.
+  """
+  flipped_uuid = uuid.split('-')
+  flipped_uuid[0], flipped_uuid[2] = flipped_uuid[2], flipped_uuid[0]
+  flipped_uuid = '-'.join(flipped_uuid)
+  return flipped_uuid
+
+
+def sortable_time_uuid_str(uuid):
+  """
+  Returns a string representation of a time UUID with the high and low
+  segments flipped to enable correct lexicographic sorting.
+  """
+  return flip_uuid_parts(str(uuid))
 
 
 class SqliteStorage(BaseStorage):
@@ -66,7 +83,7 @@ class SqliteStorage(BaseStorage):
         (namespace,
          stream,
          start_id.time,
-         tuuid_id_str(start_id),
+         sortable_time_uuid_str(start_id),
          start_id.time,
          end_id.time))
     rowcount = self.cursor.rowcount
@@ -89,7 +106,7 @@ class SqliteStorage(BaseStorage):
         (namespace,
          stream,
          start_id.time,
-         tuuid_id_str(start_id),
+         sortable_time_uuid_str(start_id),
          start_id.time,
          end_id.time)):
       if limit == 0:

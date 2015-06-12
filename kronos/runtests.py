@@ -31,7 +31,7 @@ TESTS = {
                               'sqlite')),
   'conf': ('tests/conf', ('memory', )),
   'elasticsearch': ('tests/storage/elasticsearch', ('elasticsearch', )),
-  'sqlite': ('tests/common', ('sqlite', )),
+  'sqlite': ('tests/storage/sqlite', ('sqlite', )),
 }
 
 
