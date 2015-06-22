@@ -7,6 +7,7 @@ from flask import current_app
 from jia.common.time import datetime_to_epoch_time
 from jia.common.time import datetime_to_kronos_time
 from jia.common.time import epoch_time_to_kronos_time
+from jia.common.time import kronos_time_now
 from jia.common.time import kronos_time_to_datetime
 from jia.errors import PyCodeError
 from jia.query import create_metis_query_plan
@@ -139,7 +140,7 @@ class QueryCompute(object):
     # output to the user (only for caching)
     if timeframe['mode']['value'] == 'recent':
       # Set end_time equal to now and align to bucket width
-      end_time = datetime_to_kronos_time(datetime.datetime.now())
+      end_time = kronos_time_now()
       original_end_time = end_time
       duration = get_seconds(timeframe['value'], timeframe['scale']['name'])
       duration = epoch_time_to_kronos_time(duration)
