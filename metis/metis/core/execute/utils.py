@@ -204,9 +204,7 @@ def get_properties_accessed_by_value(value):
 
 
 def cast_to_number(value, default=None):
-  for cast in (int, float):
-    try:
-      return cast(value)
-    except (TypeError, ValueError):
-      pass
-  return default
+  try:
+    return float(value)
+  except (TypeError, ValueError):
+    return default
